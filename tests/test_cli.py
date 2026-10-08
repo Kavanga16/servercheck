@@ -76,3 +76,10 @@ def test_cli_args_override_env_thresholds():
     )
     assert r.returncode == 0
     assert "STATUS: WARN" in r.stdout
+
+
+def test_cli_invalid_env_threshold():
+    r = run_cli("-n", "api", "-c", "60", env={"SERVERCHECK_WARN": "abc"})
+    assert r.returncode == 2
+    assert r.stdout == ""
+    assert "SERVERCHECK_WARN must be an integer" in r.stderr
