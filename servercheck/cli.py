@@ -5,7 +5,18 @@ import os
 import sys
 
 from servercheck import __version__
-from servercheck.core import cpu_status, validate_cpu, validate_thresholds
+from servercheck.core import cpu_status, exit_code, validate_cpu, validate_thresholds
+
+
+def _env_int(name: str, default: int) -> int:
+    """Read an integer from an environment variable, or return the default."""
+    raw = os.getenv(name)
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        raise ValueError(f"{name} must be an integer, got {raw!r}") from None
 
 
 def main() -> int:
@@ -21,11 +32,12 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    warn_env = os.getenv("SERVERCHECK_WARN")
-    alert_env = os.getenv("SERVERCHECK_ALERT")
-
-    warn = args.warn if args.warn is not None else int(warn_env) if warn_env else 50
-    alert = args.alert if args.alert is not None else int(alert_env) if alert_env else 75
+    try:
+        warn = args.warn if args.warn is not None else _env_int("SERVERCHECK_WARN", 50)
+        alert = args.alert if args.alert is not None else _env_int("SERVERCHECK_ALERT", 75)
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 2
 
     try:
         validate_thresholds(warn, alert)
@@ -57,7 +69,7 @@ def main() -> int:
         return 2
 
     status = cpu_status(cpu, warn=warn, alert=alert)
-    code = 1 if status == "ALERT" else 0
+    code = exit_code(status)
 
     if args.json:
         print(json.dumps({"name": name, "cpu": cpu, "status": status, "exit_code": code}))
