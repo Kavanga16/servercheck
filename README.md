@@ -74,6 +74,7 @@ SERVERCHECK_WARN=10 SERVERCHECK_ALERT=20 servercheck -n api -c 15
 | 0    | OK or WARN                                   |
 | 1    | ALERT                                        |
 | 2    | Invalid arguments (CPU not in 0-100, bad thresholds) |
+| 3    | Unknown status (internal fallback, should not happen in normal use) |
 
 ## Development
 
