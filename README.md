@@ -2,83 +2,94 @@
 
 # servercheck
 
-Small CLI utility to evaluate server CPU status.
+A small Python command-line tool that classifies a server's CPU usage as `OK`, `WARN` or `ALERT`.
+It prints plain text or JSON and returns exit codes, so it can be used in scripts and CI.
+
+> Status: work in progress. The core CLI is finished and tested; a URL health-check command is planned (see Roadmap).
 
 ## Features
 
-- Calculate CPU status: "OK", "WARN", "ALERT"
-- Text output or JSON output
-- Exit codes suitable for scripts/CI
-- Tested with "pytest", formatted/linted with "ruff", CI via GitHub Actions
-- Makefile shortcuts ("make check", "make fix")
+- CPU status: `OK`, `WARN` or `ALERT` (default thresholds: warn above 50, alert above 75)
+- Text or JSON output (`--json`)
+- Configurable thresholds through flags or environment variables
+- Exit codes suitable for scripts and CI
+- Verbose and quiet logging to stderr (`-v`, `-q`)
+- Tested with `pytest`, linted and formatted with `ruff`, CI on GitHub Actions
+- Makefile shortcuts (`make check`, `make fix`)
 
 ## Requirements
 
-- Python 3.x
-- (Optional) GNU Make (MSY2) for "make check"
+- Python 3.10 or newer
+- (Optional) GNU Make for `make check`
 
 ## Install
 
-### PowerShell (Windows)
+PowerShell (Windows):
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -e .
+```
 
-### Git Bash (MSYS2)
+Git Bash:
 
+```bash
 py -m venv .venv
 source .venv/Scripts/activate
 python -m pip install -e .
+```
 
-### Usage
+## Usage
 
-- Help: servercheck
-- Text output: servercheck -n api -c 60
-- JSON output: servercheck -n api -c 90 --json
-- Run as a module: python -m servercheck -n api -c 60
+```bash
+servercheck -n api -c 60          # text output
+servercheck -n api -c 90 --json   # JSON output
+python -m servercheck -n api -c 60
+```
 
-## Thresholds 
+Example output:
 
-You can configure thresholds via CLI flags (highest priority) or environment variables.
+```text
+api        | CPU:  60% | STATUS: WARN
+```
 
-Environment variables:
-- "SERVERCHECK_WARN"
-- "SERVERCHECK_ALERT"
+```json
+{"name": "api", "cpu": 90, "status": "ALERT", "exit_code": 1}
+```
 
-Example (Git Bash):
-'''bash
+## Thresholds
+
+Thresholds can be set with `--warn` and `--alert` (highest priority) or with the environment
+variables `SERVERCHECK_WARN` and `SERVERCHECK_ALERT`. They must satisfy `0 < warn < alert < 100`.
+
+```bash
 SERVERCHECK_WARN=10 SERVERCHECK_ALERT=20 servercheck -n api -c 15
-'''
+```
 
 ## Exit codes
 
-- 0 --- OK/WARN
-- 1 --- ALERT
-- 2 --- Invalid arguments (e.g., CPU out of 0-100)
-- 3 --- Unknown status (defensive fallback)
+| Code | Meaning                                      |
+|------|----------------------------------------------|
+| 0    | OK or WARN                                   |
+| 1    | ALERT                                        |
+| 2    | Invalid arguments (CPU not in 0-100, bad thresholds) |
 
 ## Development
 
-- Run lint + formatting check + tests(MSYS2):  
- make check
+```bash
+make check          # lint + format check + tests
+make fix            # auto-fix lint and reformat
+python -m pytest -q # tests only
+```
 
-- Auto-fix lint and reformat: 
- make fix
+## Project structure
 
-- Run tests only:
- python -m pytest -q
+- `servercheck/core.py`: pure logic (status, validation, URL check helper)
+- `servercheck/cli.py`: argument parsing and output formatting
+- `tests/`: unit tests, CLI tests and local HTTP server tests
 
- ## Project structure
+## Roadmap
 
- - servercheck/core.py --- pure logic (status/validation/helpers)
- - servercheck/cli.py --- CLI parsing and output formatting
- - tests/ --- unit + CLI + local HTTP server tests
-
- ## Roadmap
-
-- Add more checks (e.g., URL health check subcommand)
-- Improve CLI UX (more output formats, clearer errors)
-
-
+- URL health-check subcommand using the existing `check_url` helper
+- More output formats and clearer error messages
