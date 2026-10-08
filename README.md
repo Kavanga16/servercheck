@@ -1,4 +1,4 @@
-![ci](https://github.com/Kavanga16/parlep1/actions/workflows/ci.yml/badge.svg)
+![ci](https://github.com/Kavanga16/servercheck/actions/workflows/ci.yml/badge.svg)
 
 # servercheck
 
